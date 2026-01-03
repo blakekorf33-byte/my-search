@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>My Search</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body {
+      margin: 0;
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background: #111;
+      color: white;
+      font-family: Arial, sans-serif;
+    }
+
+    .box {
+      text-align: center;
+      width: 90%;
+      max-width: 400px;
+    }
+
+    h1 {
+      margin-bottom: 20px;
+    }
+
+    input {
+      width: 100%;
+      padding: 14px;
+      font-size: 18px;
+      border-radius: 8px;
+      border: none;
+      outline: none;
+    }
+
+    button {
+      margin-top: 15px;
+      padding: 12px 20px;
+      font-size: 18px;
+      border-radius: 8px;
+      border: none;
+      cursor: pointer;
+      background: #ff9800;
+      color: black;
+      width: 100%;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="box">
+    <h1>My Search</h1>
+    <input id="q" type="text" placeholder="Search the web..." />
+    <button onclick="go()">Search</button>
+  </div>
+
+  <script>
+    function go() {
+      const q = document.getElementById("q").value;
+      if (!q) return;
+      window.location.href = "https://duckduckgo.com/?q=" + encodeURIComponent(q);
+    }
+
+    document.getElementById("q").addEventListener("keypress", function(e) {
+      if (e.key === "Enter") go();
+    });
+  </script>
+
+</body>
+</html>
