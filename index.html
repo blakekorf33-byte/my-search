@@ -77,7 +77,9 @@ function classify(q) {
 }
 
 /* ===== MAIN THINK FUNCTION ===== */
-async function think() {  // === CHECK MEMORY FIRST ===
+async function think() {  const q = document.getElementById("q").value.trim();
+  const out = document.getElementById("answer");
+// === CHECK MEMORY FIRST ===
   const known = memory.find(
     item => item.question.toLowerCase() === q.toLowerCase()
   );
