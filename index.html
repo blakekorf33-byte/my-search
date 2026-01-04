@@ -1,14 +1,134 @@
-Good 👍
-We finish clean now. You said k, so here is the FULL mega code, completed.
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>My Intelligent System</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-👉 Do this exactly:
+<style>
+body {
+  margin: 0;
+  height: 100vh;
+  background: #111;
+  color: #fff;
+  font-family: Arial, sans-serif;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
 
-Open index.html
+.box {
+  width: 90%;
+  max-width: 420px;
+  text-align: center;
+}
 
-Delete everything
+input {
+  width: 100%;
+  padding: 14px;
+  font-size: 18px;
+  border-radius: 8px;
+  border: none;
+  outline: none;
+}
 
-Paste ALL of the code below
+button {
+  width: 100%;
+  margin-top: 12px;
+  padding: 12px;
+  font-size: 18px;
+  border-radius: 8px;
+  border: none;
+  background: #ff9800;
+  color: #000;
+  cursor: pointer;
+}
 
-Save
+#answer {
+  margin-top: 15px;
+  background: #1c1c1c;
+  padding: 12px;
+  border-radius: 8px;
+  text-align: left;
+  min-height: 40px;
+}
+</style>
+</head>
 
-No mixing. No extra lines.
+<body>
+<div class="box">
+  <h1>My Intelligent System</h1>
+  <input id="q" placeholder="Ask anything..." />
+  <button onclick="think()">Ask</button>
+  <div id="answer"></div>
+</div>
+
+<script>
+/* ===== MEMORY (LOCAL LEARNING) ===== */
+let memory = JSON.parse(localStorage.getItem("brain")) || [];
+
+/* ===== QUESTION CLASSIFIER ===== */
+function classify(q) {
+  q = q.toLowerCase();
+  if (q.startsWith("what is") || q.startsWith("who is")) return "definition";
+  if (q.startsWith("how")) return "howto";
+  if (q.startsWith("why")) return "why";
+  return "general";
+}
+
+/* ===== MAIN THINK FUNCTION ===== */
+async function think() {
+  const q = document.getElementById("q").value.trim();
+  const out = document.getElementById("answer");
+  if (!q) return;
+
+  out.innerHTML = "Thinking...";
+  const type = classify(q);
+
+  try {
+    const url =
+      "https://api.allorigins.win/raw?url=" +
+      encodeURIComponent(
+        "https://api.duckduckgo.com/?q=" + q + "&format=json&no_redirect=1"
+      );
+
+    const res = await fetch(url);
+    const data = await res.json();
+
+    let answer = "";
+
+    if (data.AbstractText) {
+      answer = data.AbstractText;
+    } else if (data.RelatedTopics && data.RelatedTopics.length > 0) {
+      answer = data.RelatedTopics[0].Text || "No clear answer yet.";
+    } else {
+      answer = "I don’t have a direct answer yet. I will remember this question.";
+    }
+
+    /* ===== STORE MEMORY ===== */
+    memory.push({
+      question: q,
+      type: type,
+      answer: answer,
+      time: new Date().toISOString()
+    });
+
+    localStorage.setItem("brain", JSON.stringify(memory));
+
+    out.innerHTML =
+      "<b>Type:</b> " + type + "<br><br>" +
+      "<b>Answer:</b><br>" + answer;
+
+  } catch (e) {
+    out.innerHTML = "Error thinking. Try again.";
+  }
+}
+
+/* ===== ENTER KEY SUPPORT ===== */
+document.getElementById("q").addEventListener("keypress", function (e) {
+  if (e.key === "Enter") think();
+});
+</script>
+
+</body>
+</html>
