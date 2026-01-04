@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>My Intelligent System</title>
+<title>My Intelligence Engine</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <style>
@@ -57,87 +57,111 @@ button {
 
 <body>
 <div class="box">
-  <h1>My Intelligent System</h1>
+  <h1>My Intelligence Engine</h1>
   <input id="q" placeholder="Ask anything..." />
   <button onclick="think()">Ask</button>
   <div id="answer"></div>
 </div>
 
 <script>
-/* ===== MEMORY (LOCAL LEARNING) ===== */
+/* ===== MEMORY ===== */
 let memory = JSON.parse(localStorage.getItem("brain")) || [];
 
-/* ===== QUESTION CLASSIFIER ===== */
+/* ===== CLASSIFY QUESTION ===== */
 function classify(q) {
   q = q.toLowerCase();
-  if (q.startsWith("what is") || q.startsWith("who is")) return "definition";
-  if (q.startsWith("how")) return "howto";
-  if (q.startsWith("why")) return "why";
+  if (q.startsWith("what") || q.startsWith("who")) return "definition";
+  if (q.startsWith("how")) return "how-to";
+  if (q.startsWith("why")) return "reason";
   return "general";
 }
 
-/* ===== MAIN THINK FUNCTION ===== */
-async function think() {  const q = document.getElementById("q").value.trim();
-  const out = document.getElementById("answer");
-// === CHECK MEMORY FIRST ===
-  const known = memory.find(
-    item => item.question.toLowerCase() === q.toLowerCase()
-  );
+/* ===== OSINT: WIKIPEDIA ===== */
+async function fetchWiki(q) {
+  try {
+    const res = await fetch(
+      "https://api.allorigins.win/raw?url=" +
+      encodeURIComponent(
+        "https://en.wikipedia.org/api/rest_v1/page/summary/" +
+        q.replace(/\s+/g, "_")
+      )
+    );
+    const data = await res.json();
+    if (data.extract) return data.extract;
+  } catch {}
+  return null;
+}
 
+/* ===== OSINT: DUCKDUCKGO ===== */
+async function fetchDDG(q) {
+  try {
+    const res = await fetch(
+      "https://api.allorigins.win/raw?url=" +
+      encodeURIComponent(
+        "https://api.duckduckgo.com/?q=" + q + "&format=json&no_redirect=1"
+      )
+    );
+    const data = await res.json();
+    if (data.AbstractText) return data.AbstractText;
+  } catch {}
+  return null;
+}
+
+/* ===== MAIN THINK FUNCTION ===== */
+async function think() {
+  const q = document.getElementById("q").value.trim();
+  const out = document.getElementById("answer");
+  if (!q) return;
+
+  out.innerHTML = "Thinking…";
+
+  /* MEMORY FIRST */
+  const known = memory.find(
+    m => m.question.toLowerCase() === q.toLowerCase()
+  );
   if (known) {
     out.innerHTML =
       "<b>Type:</b> " + known.type + "<br><br>" +
       "<b>Answer (from memory):</b><br>" + known.answer;
     return;
   }
-  const q = document.getElementById("q").value.trim();
-  const out = document.getElementById("answer");
-  if (!q) return;
 
-  out.innerHTML = "Thinking...";
   const type = classify(q);
 
-  try {
-    const url =
-      "https://api.allorigins.win/raw?url=" +
-      encodeURIComponent(
-        "https://api.duckduckgo.com/?q=" + q + "&format=json&no_redirect=1"
-      );
+  /* OSINT SOURCES */
+  let answer = await fetchWiki(q);
+  if (!answer) answer = await fetchDDG(q);
 
-    const res = await fetch(url);
-    const data = await res.json();
-
-    let answer = "";
-
-    if (data.AbstractText) {
-      answer = data.AbstractText;
-    } else if (data.RelatedTopics && data.RelatedTopics.length > 0) {
-      answer = data.RelatedTopics[0].Text || "No clear answer yet.";
-    } else {
-      answer = "I don’t have a direct answer yet. I will remember this question.";
-    }
-
-    /* ===== STORE MEMORY ===== */
-    memory.push({
-      question: q,
-      type: type,
-      answer: answer,
-      time: new Date().toISOString()
-    });
-
-    localStorage.setItem("brain", JSON.stringify(memory));
-
+  if (!answer) {
     out.innerHTML =
-      "<b>Type:</b> " + type + "<br><br>" +
-      "<b>Answer:</b><br>" + answer;
-
-  } catch (e) {
-    out.innerHTML = "Error thinking. Try again.";
+      "No answer yet.<br><br>" +
+      "<button onclick='search()'>Search the web</button>";
+    return;
   }
+
+  /* SAVE MEMORY */
+  memory.push({
+    question: q,
+    type: type,
+    answer: answer,
+    time: new Date().toISOString()
+  });
+  localStorage.setItem("brain", JSON.stringify(memory));
+
+  out.innerHTML =
+    "<b>Type:</b> " + type + "<br><br>" +
+    "<b>Answer:</b><br>" + answer;
 }
 
-/* ===== ENTER KEY SUPPORT ===== */
-document.getElementById("q").addEventListener("keypress", function (e) {
+/* ===== OPTIONAL SEARCH ===== */
+function search() {
+  const q = document.getElementById("q").value.trim();
+  if (!q) return;
+  window.location.href = "https://duckduckgo.com/?q=" + encodeURIComponent(q);
+}
+
+/* ===== ENTER KEY ===== */
+document.getElementById("q").addEventListener("keypress", e => {
   if (e.key === "Enter") think();
 });
 </script>
