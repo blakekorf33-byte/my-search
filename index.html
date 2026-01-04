@@ -133,11 +133,19 @@ async function think() {
   if (!answer) answer = await fetchDDG(q);
 
   if (!answer) {
+  if (q.toLowerCase().includes("make money")) {
+    answer =
+      "Common legal ways to make money include: " +
+      "starting a small service business, freelancing online, " +
+      "selling digital products, learning a trade, or investing long-term. " +
+      "The best option depends on your skills, time, and risk tolerance.";
+  } else {
     out.innerHTML =
       "No answer yet.<br><br>" +
       "<button onclick='search()'>Search the web</button>";
     return;
   }
+}
 
   /* SAVE MEMORY */
   memory.push({
